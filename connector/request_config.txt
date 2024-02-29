@@ -1,0 +1,32 @@
+curl --location 'http://localhost:8083/connectors' \
+--header 'Content-Type: application/json' \
+--data '{
+    "name": "postgresqlInventory2Connector",
+    "config" : {
+        "connector.class": "io.debezium.connector.postgresql.PostgresConnector", 
+        "database.hostname": "host.docker.internal", 
+        "database.port": "5432", 
+        "database.user": "postgres", 
+        "database.password": "Postgres2022!", 
+        "database.dbname": "postgres", 
+        "database.server.name": "postgres",
+        "plugin.name": "pgoutput",
+        "slot.name": "inventory_slot",
+        "schema.include.list": "legacy01",
+        "snapshot.mode": "initial",
+        "snapshot.lock.timeout.ms": "60000",
+        "schema.refresh.mode": "columns_diff_exclude_unchanged_toast",
+        "table.include.list": "legacy01.Client",
+        "schema.poll.interval.ms": "500",
+        "heartbeat.interval.ms": "1000",
+        "topic.prefix": "debezium",
+        "database.history.kafka.bootstrap.servers": "host.docker.internal:9092",
+        "database.history.kafka.topic": "schema-changes.client",
+        "topic.creation.default.cleanup.policy": "delete",
+        "topic.creation.default.partitions": "1",
+        "topic.creation.default.replication.factor": "1",
+        "topic.creation.default.retention.ms": "604800000",
+        "topic.creation.enable": "true"
+    }
+}
+'
