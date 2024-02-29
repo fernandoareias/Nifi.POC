@@ -1,4 +1,4 @@
-# NiFi Data Integration and Migration POC Readme
+# NiFi Data Integration and Migration POC
 
 ## Prerequisites
 
