@@ -1,0 +1,17 @@
+curl --location 'http://localhost:8083/connectors' \
+--header 'Content-Type: application/json' \
+--data '{
+    "name": "mongodbInventoryConnector",
+    "config": {
+        "connector.class": "io.debezium.connector.mongodb.MongoDbConnector",
+        "tasks.max": "1",
+        "mongodb.connection.string": "mongodb://host.docker.internal:27017/?replicaSet=rs0",
+        "mongodb.name": "dbserver1",
+        "database.include.list": "ibpj",
+        "collection.include.list": "ibpj.pix,ibpj.teds",
+        "topic.prefix": "dbserver1",
+        "database.history.kafka.bootstrap.servers": "host.docker.internal:9092",
+        "database.history.kafka.topic": "schema-changes.mongo"
+    }
+}
+'

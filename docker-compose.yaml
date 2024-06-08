@@ -10,19 +10,19 @@ services:
     environment:
       - NIFI_WEB_HTTP_PORT=8080
     volumes:
-      - /Users/f.areias/Documents/Courses/NiFi/nifi/database_repository:/opt/nifi/nifi-current/database_repository
-      - /Users/f.areias/Documents/Courses/NiFi/nifi/flowfile_repository:/opt/nifi/nifi-current/flowfile_repository
-      - /Users/f.areias/Documents/Courses/NiFi/nifi/content_repository:/opt/nifi/nifi-current/content_repository
-      - /Users/f.areias/Documents/Courses/NiFi/nifi/provenance_repository:/opt/nifi/nifi-current/provenance_repository
-      - /Users/f.areias/Documents/Courses/NiFi/nifi/state:/opt/nifi/nifi-current/state
-      - /Users/f.areias/Documents/Courses/NiFi/nifi/logs:/opt/nifi/nifi-current/logs
+      - ./nifi/database_repository:/opt/nifi/nifi-current/database_repository
+      - ./nifi/flowfile_repository:/opt/nifi/nifi-current/flowfile_repository
+      - ./nifi/content_repository:/opt/nifi/nifi-current/content_repository
+      - ./nifi/provenance_repository:/opt/nifi/nifi-current/provenance_repository
+      - ./nifi/state:/opt/nifi/nifi-current/state
+      - ./nifi/logs:/opt/nifi/nifi-current/logs
     networks:
       - treinamento
 
   registry:
     hostname: myregistry
     container_name: registry_container_persistent
-    image: "apache/nifi-registry:1.15.0" # latest image as of 2021-11-09.
+    image: "apache/nifi-registry:1.15.0"
     restart: on-failure
     ports:
       - "18080:18080"
@@ -37,21 +37,21 @@ services:
     networks:
       - treinamento
 
-  postgres:
-    image: postgres
-    environment:
-      POSTGRES_USER: "postgres"
-      POSTGRES_PASSWORD: "Postgres2022!"
+  mongo1:
+    image: mongo:7.0
+    command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27017"]
     ports:
-      - "5432:5432"
+      - 27017:27017
     networks:
       - treinamento
-    command:
-      - "postgres"
-      - "-c"
-      - "wal_level=logical"
-    volumes:
-      - /Users/f.areias/Documents/Courses/NiFi/postgresql/scripts_sql:/docker-entrypoint-initdb.d
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: echo "try { rs.status() } catch (err) { rs.initiate({_id:'rs0',members:[{_id:0,host:'host.docker.internal:27017'}]}) }" | mongosh --port 27017 --quiet
+      interval: 5s
+      timeout: 30s
+      start_period: 0s
+      retries: 30
 
   zookeeper:
     image: wurstmeister/zookeeper:3.4.6
@@ -78,18 +78,25 @@ services:
       - treinamento
 
   connect:
-    image: "debezium/connect"
+    image: "debezium/connect:latest"
     environment:
-      GROUP_ID: 1
+      GROUP_ID: "1"
       REST_ADVERTISED_HOST_NAME: "connect"
       BOOTSTRAP_SERVERS: "host.docker.internal:9092"
-      ZOOKEEPER_CONNECT: "host.docker.internal:2181"
       CONFIG_STORAGE_TOPIC: "my_connect_configs"
       OFFSET_STORAGE_TOPIC: "my_connect_offsets"
       STATUS_STORAGE_TOPIC: "my_connect_statuses"
+      CONNECT_PLUGIN_PATH: "/kafka/plugins"
+      CONNECT_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_INTERNAL_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_INTERNAL_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
     ports:
       - "8083:8083"
     container_name: "connect"
+    volumes:
+      - ./kafka/connect:/kafka/connect
+      - ./debezium-connector-mongodb:/kafka/plugins/debezium-connector-mongodb
     networks:
       - treinamento
 
@@ -103,6 +110,8 @@ services:
     environment:
       KAFKA_CLUSTERS_0_NAME: local
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: host.docker.internal:9092
+    networks:
+      - treinamento
 
 networks:
   treinamento:
