@@ -50,4 +50,4 @@ This POC is provided as-is without any warranties. It's intended for demonstrati
 
 ## Contact
 
-For any questions or inquiries, please contact [maintainer email or username].
+For any questions or inquiries, please contact [nando.calheirosx@gmail.com].
